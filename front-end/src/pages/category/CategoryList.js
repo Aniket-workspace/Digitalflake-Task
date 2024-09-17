@@ -13,13 +13,12 @@ import {
   TableBody,
   Paper,
   Modal,
-  Grid2,
+  Grid,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
 import { Link, useNavigate } from "react-router-dom";
 import SearchIcon from "@mui/icons-material/Search";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -40,30 +39,22 @@ const CategoryList = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchCategory = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8080/category-list`);
-        setCategoryData(response.data);
-      } catch (error) {
-        console.error("Error fetching Categories:", error);
-      }
-    };
-
     fetchCategory();
   }, []);
 
-  // update batch.............................
-  // const handleOpen = async (catId) => {
-  //   setCategoryModalOpen(true);
-  //   let result = await fetch(`http://localhost:8080/alldata/${catId}`);
-  //   // let result = await fetch(`${window.location.origin}/update-batch/${Id}`);
-  //   result = await result.json();
-  //   setCategory(result.category);
-  //   setImage(result.image);
-  //   setStatus(result.status);
-
-  //   console.log(result.category);
-  // };
+  // get
+  const fetchCategory = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/category-list`, {
+        headers: {
+          authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+        },
+      });
+      setCategoryData(response.data);
+    } catch (error) {
+      console.error("Error fetching Categories:", error);
+    }
+  };
 
   const handleClose = () => {
     setCategoryModalOpen(false);
@@ -73,10 +64,16 @@ const CategoryList = () => {
     setCategoryModalOpen(true);
     try {
       const response = await axios.get(
-        `http://localhost:8080/get-category/${catId}`
+        `http://localhost:8080/get-category/${catId}`,
+        {
+          headers: {
+            authorization: `bearer ${JSON.parse(
+              localStorage.getItem("token")
+            )}`,
+          },
+        }
       );
       let result = response.data[0];
-      // SetUpdateCategoryData(response.data);
       setCategory(result.category);
       setImage(result.image);
       setStatus(result.status);
@@ -87,29 +84,27 @@ const CategoryList = () => {
     }
   };
 
+  // update
+
   const updateCategory = async () => {
     let data = {
       category: Category,
       image: Image,
       status: Status,
     };
-    let result = await fetch(
-      `http://localhost:8080/update-category/${Id}`,
-      // `${window.location.origin}/update-batch/${batchObjectId}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    let result = await fetch(`http://localhost:8080/update-category/${Id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+      },
+    });
     result = await result.json();
     console.log(result);
     setCategoryModalOpen(false);
+    fetchCategory();
     alert("Data Successfully updated");
-
-    navigate("/category");
   };
 
   const convertToBase64 = (e) => {
@@ -132,9 +127,13 @@ const CategoryList = () => {
     try {
       let result = await fetch(`http://localhost:8080/delete-category/${id}`, {
         method: "DELETE",
+        headers: {
+          authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+        },
       });
       result = await result.json();
       if (result) {
+        fetchCategory();
         alert("Category Deleted");
       }
     } catch (error) {
@@ -142,14 +141,30 @@ const CategoryList = () => {
     }
   };
 
-  //
+  //search
+  const searchHandel = async (event) => {
+    let key = event.target.value;
+    if (key) {
+      let result = await fetch(`http://localhost:8080/search-category/${key}`, {
+        headers: {
+          authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+        },
+      });
+      result = await result.json();
+      if (result) {
+        setCategoryData(result);
+      }
+    } else {
+      fetchCategory();
+    }
+  };
 
   const style = {
     position: "absolute",
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: 350,
+    width: { xs: 280, md: 400 },
     bgcolor: "background.paper",
     borderRadius: "15px",
     boxShadow: 24,
@@ -157,27 +172,31 @@ const CategoryList = () => {
   };
 
   return (
-    <Box sx={{ display: "flex", width: "100%" }}>
+    <Box>
       <Box
         sx={{
-          width: "100%",
-          padding: "32px",
+          padding: "30px",
           backgroundColor: "#fff",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <CategoryIcon />
-          <Typography variant="h5" fontWeight={600}>
-            Category
-          </Typography>
-          <Box sx={{ flexGrow: 1, ml: 4 }}>
+        <Grid container sx={{ mb: 2 }} spacing={2}>
+          <Grid item md={3} xs={12}>
+            <Box display={"flex"}>
+              <CategoryIcon />
+              <Typography variant="h5" fontWeight={600} ml={1.5}>
+                Category
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item md={7} xs={12}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
                 border: "1px solid #B0ADAD",
                 borderRadius: 1,
-                width: 500,
+                width: { xs: "90%", md: "500" },
                 px: 2,
               }}
             >
@@ -187,27 +206,28 @@ const CategoryList = () => {
                 placeholder="Search..."
                 fullWidth
                 InputProps={{ disableUnderline: true }}
-                sx={{ ml: 2 }}
+                onChange={searchHandel}
               />
             </Box>
-          </Box>
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#662671",
-              color: "#FFF",
-              borderRadius: 1,
-              ml: 2,
-              "&:hover": { backgroundColor: "#552261" },
-            }}
-            component={Link}
-            to="/add-category"
-          >
-            Add New
-          </Button>
-        </Box>
+          </Grid>
 
-        <Box sx={{ height: 700, width: "100%" }}>
+          <Grid item md={2} xs={12}>
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                borderRadius: 1,
+              }}
+              color="secondary"
+              component={Link}
+              to="/add-category"
+            >
+              Add New
+            </Button>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ height: "100vh" }}>
           <TableContainer component={Paper} sx={{ textAlign: "center" }}>
             <Table
               sx={{ textAlign: "center" }}
@@ -215,7 +235,11 @@ const CategoryList = () => {
               aria-label="sticky table"
             >
               <TableHead>
-                <TableRow sx={{ backgroundColor: "red" }}>
+                <TableRow
+                  sx={{
+                    backgroundColor: "red",
+                  }}
+                >
                   <TableCell align="center">
                     <b>ID</b>
                   </TableCell>
@@ -242,7 +266,12 @@ const CategoryList = () => {
                     <TableCell align="center">{item.id}</TableCell>
                     <TableCell align="center">{item.category}</TableCell>
                     <TableCell align="center">
-                      <img src={item.image} height={70} width={70} />
+                      <img
+                        src={item.image}
+                        height={50}
+                        width={50}
+                        alt="Category image"
+                      />
                     </TableCell>
 
                     <TableCell align="center">
@@ -300,9 +329,15 @@ const CategoryList = () => {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Grid2 container spacing={2}>
-            <Grid2 item xs={12} md={6}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6" fontWeight={600}>
+                Update category
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <TextField
+                fullWidth
                 required
                 label="Category"
                 name="category"
@@ -310,10 +345,10 @@ const CategoryList = () => {
                 value={Category}
                 onChange={(e) => setCategory(e.target.value)}
               />
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12}>
-              <FormControl>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
                 <InputLabel>Select Status</InputLabel>
                 <Select
                   label="Select Batch"
@@ -325,48 +360,58 @@ const CategoryList = () => {
                   <MenuItem value="false">Inactive</MenuItem>
                 </Select>
               </FormControl>
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12} md={6}>
+            <Grid item xs={12} md={6}>
+              {/* <FormControl fullWidth> */}
               <TextField
                 required
-                label="Image"
+                fullWidth
                 name="image"
                 type="file"
                 // value={null}
                 onChange={convertToBase64}
               />
-            </Grid2>
+            </Grid>
 
-            <Grid2
+            <Grid
               item
               xs={12}
-              md={6}
-              sx={{ padding: "10px", border: "1px solid grey" }}
+              md={5.3}
+              sx={{
+                padding: "10px",
+                border: "1px solid grey",
+                margin: "18px 0 0 18px",
+              }}
             >
               <img src={Image} width={100} height={100} />
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12} mt={11}>
+            <Grid item xs={6}>
               <Button
+                fullWidth
                 type="submit"
                 onClick={updateCategory}
                 variant="contained"
                 color="secondary"
+                size="small"
               >
                 Update
               </Button>
+            </Grid>
 
+            <Grid item xs={6}>
               <Button
+                fullWidth
                 onClick={handleClose}
                 variant="contained"
                 color="secondary"
-                sx={{ marginLeft: "10px" }}
+                size="small"
               >
                 Cancle
               </Button>
-            </Grid2>
-          </Grid2>
+            </Grid>
+          </Grid>
         </Box>
       </Modal>
     </Box>

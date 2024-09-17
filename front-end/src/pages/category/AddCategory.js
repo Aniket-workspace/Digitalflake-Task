@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import Button from "@mui/material/Button";
-import { Box, Grid2, TextField, Typography } from "@mui/material";
+import { Box, Grid, TextField, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
 function AddCategory() {
@@ -36,7 +36,10 @@ function AddCategory() {
     let result = await fetch(`http://localhost:8080/add-category`, {
       method: "POST",
       body: JSON.stringify(categoryData),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+      },
     });
     result = await result.json();
     console.log(result);
@@ -45,76 +48,91 @@ function AddCategory() {
   };
   return (
     <div>
-      <Box
-        sx={{
-          width: "100%",
-          padding: "32px",
-          backgroundColor: "#fff",
-        }}
-      >
-        <Typography variant="h5">Add Category</Typography>
-      </Box>
+      <Box>
+        <Box
+          sx={{
+            padding: "32px",
+            backgroundColor: "#fff",
+          }}
+        >
+          <Typography variant="h5" fontWeight={600}>
+            Add Category
+          </Typography>
+        </Box>
 
-      <Box
-        sx={{
-          width: "100%",
-          padding: "0 32px",
-          backgroundColor: "#fff",
-        }}
-      >
-        <Grid2 container spacing={2}>
-          <Grid2>
-            <TextField
-              required
-              fullWidth
-              label="Category"
-              name="category"
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            />
-          </Grid2>
+        <Box
+          sx={{
+            display: "flex",
+            padding: "0 32px",
+            backgroundColor: "#fff",
+          }}
+        >
+          <Grid container spacing={2}>
+            <Grid item md={4} xs={12}>
+              <TextField
+                required
+                fullWidth
+                label="Category"
+                name="category"
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              />
+            </Grid>
 
-          <Grid2>
-            <TextField
-              required
-              fullWidth
-              name="image"
-              type="file"
-              //   value={image}
-              onChange={convertToBase64}
-            />
-          </Grid2>
+            <Grid item md={4} xs={12}>
+              <TextField
+                required
+                fullWidth
+                name="image"
+                type="file"
+                //   value={image}
+                onChange={convertToBase64}
+              />
+            </Grid>
 
-          {image == "" || image == null ? (
-            ""
-          ) : (
-            <Grid2 xs={12} sx={{ padding: "10px", border: "1px solid grey" }}>
-              <img src={image} height={100} width={100} />
-            </Grid2>
-          )}
-        </Grid2>
+            {image == "" || image == null ? (
+              ""
+            ) : (
+              <Grid
+                item
+                md={3.7}
+                xs={12}
+                sx={{
+                  padding: "10px",
+                  border: "1px solid grey",
+                  margin: "18px 0 0 18px",
+                }}
+              >
+                <img src={image} height={100} width={100} />
+              </Grid>
+            )}
 
-        <Grid2 xs={12} pt={2}>
-          <Button
-            variant="contained"
-            sx={{ backgroundColor: "#5c218b" }}
-            onClick={addCategory}
-          >
-            Save
-          </Button>
+            <Grid item md={6} xs={12}>
+              <Button
+                fullWidth
+                variant="contained"
+                color="secondary"
+                onClick={addCategory}
+              >
+                Save
+              </Button>
+            </Grid>
 
-          <Button
-            variant="outlined"
-            color="secondary"
-            sx={{ marginLeft: "10px" }}
-            onClick={() => {
-              navigate("/category");
-            }}
-          >
-            Cancle
-          </Button>
-        </Grid2>
+            <Grid item md={6} xs={12}>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="secondary"
+                onClick={() => {
+                  navigate("/category");
+                }}
+              >
+                Cancle
+              </Button>
+            </Grid>
+          </Grid>
+        </Box>
       </Box>
     </div>
   );

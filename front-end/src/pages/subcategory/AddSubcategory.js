@@ -3,7 +3,7 @@ import Button from "@mui/material/Button";
 import {
   Box,
   FormControl,
-  Grid2,
+  Grid,
   InputLabel,
   MenuItem,
   Select,
@@ -24,7 +24,16 @@ function AddSubcategory() {
   useEffect(() => {
     const fetchCategory = async () => {
       try {
-        const response = await axios.get(`http://localhost:8080/category-list`);
+        const response = await axios.get(
+          `http://localhost:8080/category-list`,
+          {
+            headers: {
+              authorization: `bearer ${JSON.parse(
+                localStorage.getItem("token")
+              )}`,
+            },
+          }
+        );
         setCategoryData(response.data);
       } catch (error) {
         console.error("Error fetching Categories:", error);
@@ -48,7 +57,10 @@ function AddSubcategory() {
     let result = await fetch(`http://localhost:8080/add-subcategory`, {
       method: "POST",
       body: JSON.stringify(subcategoryData),
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+      },
     });
     result = await result.json();
     console.log(result);
@@ -58,25 +70,27 @@ function AddSubcategory() {
 
   return (
     <div>
-      <Box
-        sx={{
-          width: "100%",
-          padding: "32px",
-          backgroundColor: "#fff",
-        }}
-      >
-        <Typography variant="h5">Add Subcategory</Typography>
+      <Box>
+        <Box
+          sx={{
+            padding: "32px",
+            backgroundColor: "#fff",
+          }}
+        >
+          <Typography variant="h5" fontWeight={600}>
+            Add Subcategory
+          </Typography>
+        </Box>
       </Box>
 
       <Box
         sx={{
-          width: "100%",
           padding: "0 32px",
           backgroundColor: "#fff",
         }}
       >
-        <Grid2 container spacing={2}>
-          <Grid2>
+        <Grid container spacing={2}>
+          <Grid item md={6} xs={12}>
             <TextField
               required
               fullWidth
@@ -86,10 +100,10 @@ function AddSubcategory() {
               value={subcategory}
               onChange={(e) => setSubcategory(e.target.value)}
             />
-          </Grid2>
+          </Grid>
 
-          <Grid2>
-            <FormControl sx={{ width: "200px" }}>
+          <Grid item md={6} xs={12}>
+            <FormControl fullWidth>
               <InputLabel>Category</InputLabel>
               <Select
                 label="Category "
@@ -102,31 +116,32 @@ function AddSubcategory() {
                 ))}
               </Select>
             </FormControl>
-          </Grid2>
-        </Grid2>
+          </Grid>
 
-        <Grid2 container spacing={2} mt={2}>
-          <Grid2>
+          <Grid item md={6} xs={12}>
             <Button
+              fullWidth
               variant="contained"
-              sx={{ backgroundColor: "#5c218b" }}
+              color="secondary"
               onClick={addSubcategory}
             >
               Save
             </Button>
+          </Grid>
 
+          <Grid item md={6} xs={12}>
             <Button
+              fullWidth
               variant="outlined"
               color="secondary"
-              sx={{ marginLeft: "10px" }}
               onClick={() => {
                 navigate("/subcategory");
               }}
             >
               Cancle
             </Button>
-          </Grid2>
-        </Grid2>
+          </Grid>
+        </Grid>
       </Box>
     </div>
   );

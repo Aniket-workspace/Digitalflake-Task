@@ -1,26 +1,14 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
-import { NavLink, useNavigate } from "react-router-dom";
-import Avatar from "@mui/material/Avatar";
+import { useNavigate } from "react-router-dom";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
 import Link from "@mui/material/Link";
 import Grid from "@mui/material/Grid";
 import Box from "@mui/material/Box";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import Typography from "@mui/material/Typography";
 import Container from "@mui/material/Container";
 import logo from "../assets/image.png";
-import {
-  FormControl,
-  Select,
-  MenuItem,
-  InputLabel,
-  Icon,
-  FormControlLabel,
-  Checkbox,
-} from "@mui/material";
 
 import IconButton from "@mui/material/IconButton";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -54,11 +42,9 @@ function Login() {
       result = await result.json();
       console.log(result);
 
-      localStorage.setItem("user", JSON.stringify(result));
-
       if (result.auth) {
         localStorage.setItem("user", JSON.stringify(result.user));
-        localStorage.setItem("user", JSON.stringify(result.auth));
+        localStorage.setItem("token", JSON.stringify(result.auth));
 
         navigate("/home");
       } else {

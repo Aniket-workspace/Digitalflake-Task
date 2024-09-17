@@ -14,7 +14,7 @@ import {
   TableBody,
   Paper,
   Modal,
-  Grid2,
+  Grid,
   FormControl,
   InputLabel,
   Select,
@@ -28,7 +28,7 @@ import Swal from "sweetalert2";
 import LayersIcon from "@mui/icons-material/Layers";
 
 const ProductList = () => {
-  const [subcategoryData, setSubcategoryData] = useState([]);
+  const [productData, setProductData] = useState([]);
 
   const [product, setProduct] = useState("");
   const [subcategory, setSubcategory] = useState("");
@@ -39,17 +39,22 @@ const ProductList = () => {
   const [productModalOpen, setProductModalOpen] = useState(false);
 
   useEffect(() => {
-    const fetchSubcategory = async () => {
-      try {
-        const response = await axios.get(`http://localhost:8080/product-list`);
-        setSubcategoryData(response.data);
-      } catch (error) {
-        console.error("Error fetching Categories:", error);
-      }
-    };
-
-    fetchSubcategory();
+    fetchProducts();
   }, []);
+
+  // get
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`http://localhost:8080/product-list`, {
+        headers: {
+          authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+        },
+      });
+      setProductData(response.data);
+    } catch (error) {
+      console.error("Error fetching Categories:", error);
+    }
+  };
 
   const handleClose = () => {
     setProductModalOpen(false);
@@ -59,10 +64,16 @@ const ProductList = () => {
     setProductModalOpen(true);
     try {
       const response = await axios.get(
-        `http://localhost:8080/get-product/${catId}`
+        `http://localhost:8080/get-product/${catId}`,
+        {
+          headers: {
+            authorization: `bearer ${JSON.parse(
+              localStorage.getItem("token")
+            )}`,
+          },
+        }
       );
       let result = response.data[0];
-      // SetUpdateCategoryData(response.data);
       setCategory(result.category);
       setImage(result.image);
       setStatus(result.status);
@@ -83,20 +94,18 @@ const ProductList = () => {
       subcategory: subcategory,
       product: product,
     };
-    let result = await fetch(
-      `http://localhost:8080/update-product/${Id}`,
-      // `${window.location.origin}/update-batch/${batchObjectId}`,
-      {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    let result = await fetch(`http://localhost:8080/update-product/${Id}`, {
+      method: "PUT",
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json",
+        authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+      },
+    });
     result = await result.json();
     console.log(result);
     setProductModalOpen(false);
+    fetchProducts();
     alert("Data Successfully updated");
   };
 
@@ -120,13 +129,36 @@ const ProductList = () => {
     try {
       let result = await fetch(`http://localhost:8080/delete-product/${id}`, {
         method: "DELETE",
+        headers: {
+          authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+        },
       });
       result = await result.json();
       if (result) {
-        alert("Category Deleted");
+        fetchProducts();
+        alert("Product Deleted");
       }
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  // search
+  //search
+  const searchHandel = async (event) => {
+    let key = event.target.value;
+    if (key) {
+      let result = await fetch(`http://localhost:8080/search-product/${key}`, {
+        headers: {
+          authorization: `bearer ${JSON.parse(localStorage.getItem("token"))}`,
+        },
+      });
+      result = await result.json();
+      if (result) {
+        setProductData(result);
+      }
+    } else {
+      fetchProducts();
     }
   };
 
@@ -135,35 +167,38 @@ const ProductList = () => {
     top: "50%",
     left: "50%",
     transform: "translate(-50%, -50%)",
-    width: 400,
+    width: { xs: 280, md: 400 },
     bgcolor: "background.paper",
     borderRadius: "15px",
     boxShadow: 24,
     p: 4,
   };
-
   return (
-    <Box sx={{ display: "flex", width: "100%" }}>
+    <Box>
       <Box
         sx={{
-          width: "100%",
           padding: "32px",
           backgroundColor: "#fff",
         }}
       >
-        <Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
-          <LayersIcon />
-          <Typography variant="h5" fontWeight={600}>
-            Products
-          </Typography>
-          <Box sx={{ flexGrow: 1, ml: 4 }}>
+        <Grid container sx={{ mb: 2 }} spacing={2}>
+          <Grid item md={3} xs={12}>
+            <Box display={"flex"}>
+              <LayersIcon />
+              <Typography variant="h5" fontWeight={600} ml={1.5}>
+                Products
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid item md={7} xs={12}>
             <Box
               sx={{
                 display: "flex",
                 alignItems: "center",
                 border: "1px solid #B0ADAD",
                 borderRadius: 1,
-                width: 500,
+                width: { xs: "90%", md: "500" },
                 px: 2,
               }}
             >
@@ -173,25 +208,26 @@ const ProductList = () => {
                 placeholder="Search..."
                 fullWidth
                 InputProps={{ disableUnderline: true }}
-                sx={{ ml: 2 }}
+                onChange={searchHandel}
               />
             </Box>
-          </Box>
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#662671",
-              color: "#FFF",
-              borderRadius: 1,
-              ml: 2,
-              "&:hover": { backgroundColor: "#552261" },
-            }}
-            component={Link}
-            to="/add-product"
-          >
-            Add New
-          </Button>
-        </Box>
+          </Grid>
+
+          <Grid item md={2} xs={12}>
+            <Button
+              fullWidth
+              variant="contained"
+              sx={{
+                borderRadius: 1,
+              }}
+              color="secondary"
+              component={Link}
+              to="/add-product"
+            >
+              Add New
+            </Button>
+          </Grid>
+        </Grid>
 
         <Box sx={{ height: 500, width: "100%" }}>
           <TableContainer component={Paper} sx={{ textAlign: "center" }}>
@@ -231,12 +267,17 @@ const ProductList = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {subcategoryData.map((item) => (
+                {productData.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell align="center">{item.id}</TableCell>
                     <TableCell align="center">{item.product}</TableCell>
                     <TableCell align="center">
-                      <img src={item.image} height={70} width={70} />
+                      <img
+                        src={item.image}
+                        height={70}
+                        width={70}
+                        alt="Product image"
+                      />
                     </TableCell>
                     <TableCell align="center">{item.subcategory}</TableCell>
                     <TableCell align="center">{item.category}</TableCell>
@@ -296,21 +337,26 @@ const ProductList = () => {
         aria-describedby="modal-modal-description"
       >
         <Box sx={style}>
-          <Grid2 container spacing={2}>
-            <Grid2 item xs={12} md={6}>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6" fontWeight={600}>
+                Update subcategory
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
               <TextField
+                fullWidth
                 required
-                sx={{ width: "190px" }}
                 label="Product Name"
                 name="product"
                 type="text"
                 value={product}
                 onChange={(e) => setProduct(e.target.value)}
               />
-            </Grid2>
+            </Grid>
 
-            <Grid2 xs={12} md={6}>
-              <FormControl sx={{ width: "190px" }}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
                 <InputLabel>Category</InputLabel>
                 <Select
                   label="Category "
@@ -320,15 +366,15 @@ const ProductList = () => {
                   }}
                   required
                 >
-                  {subcategoryData.map((item) => (
+                  {productData.map((item) => (
                     <MenuItem value={item.category}>{item.category}</MenuItem>
                   ))}
                 </Select>
               </FormControl>
-            </Grid2>
+            </Grid>
 
-            <Grid2 xs={12} md={6}>
-              <FormControl sx={{ width: "190px" }}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
                 <InputLabel>Subcategory</InputLabel>
                 <Select
                   label="Subcategory "
@@ -336,17 +382,17 @@ const ProductList = () => {
                   onChange={(e) => setSubcategory(e.target.value)}
                   required
                 >
-                  {subcategoryData.map((item) => (
+                  {productData.map((item) => (
                     <MenuItem value={item.subcategory}>
                       {item.subcategory}
                     </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12}>
-              <FormControl sx={{ width: "190px" }}>
+            <Grid item xs={12} md={6}>
+              <FormControl fullWidth>
                 <InputLabel>Select Status</InputLabel>
                 <Select
                   label="Select Batch"
@@ -358,49 +404,57 @@ const ProductList = () => {
                   <MenuItem value="false">Inactive</MenuItem>
                 </Select>
               </FormControl>
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12} md={6}>
+            <Grid item xs={12} md={6}>
               <TextField
                 required
                 fullWidth
                 name="image"
                 type="file"
-                sx={{ width: "400px" }}
                 // value={null}
                 onChange={convertToBase64}
               />
-            </Grid2>
+            </Grid>
 
-            <Grid2
+            <Grid
               item
               xs={12}
-              md={6}
-              sx={{ padding: "10px", border: "1px solid grey" }}
+              md={5.3}
+              sx={{
+                padding: "10px",
+                border: "1px solid grey",
+                margin: "18px 0 0 18px",
+              }}
             >
               <img src={Image} width={100} height={100} />
-            </Grid2>
+            </Grid>
 
-            <Grid2 item xs={12} mt={11} ml={8}>
+            <Grid item xs={6}>
               <Button
+                fullWidth
                 type="submit"
                 onClick={updateProduct}
-                color="secondary"
                 variant="contained"
+                color="secondary"
+                size="small"
               >
                 Update
               </Button>
+            </Grid>
 
+            <Grid item xs={6}>
               <Button
+                fullWidth
                 onClick={handleClose}
-                color="secondary"
-                sx={{ marginLeft: "10px" }}
                 variant="contained"
+                color="secondary"
+                size="small"
               >
                 Cancle
               </Button>
-            </Grid2>
-          </Grid2>
+            </Grid>
+          </Grid>
         </Box>
       </Modal>
     </Box>
