@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import Button from "@mui/material/Button";
 import CssBaseline from "@mui/material/CssBaseline";
 import TextField from "@mui/material/TextField";
@@ -144,14 +144,16 @@ function Login() {
             >
               Sign In
             </Button>
-            <Grid container>
-              {/* forgot password */}
+
+            {/* forgot password */}
+
+            {/* <Grid container>
               <Grid item xs>
-                <Link href="#" variant="body2" color="secondary">
+                <NavLink to={"/signup"} variant="body2" color="secondary">
                   Forgot password?
-                </Link>
+                </NavLink>
               </Grid>
-            </Grid>
+            </Grid> */}
           </Box>
         </Box>
       </Container>

@@ -11,6 +11,7 @@ import AddSubcategory from "./pages/subcategory/AddSubcategory.js";
 import AddProduct from "./pages/product/AddProduct.js";
 import Login from "./pages/Login.js";
 import PrivateComp from "./components/PrivateComp.js";
+import SignUp from "./pages/SignUp.js";
 
 function App() {
   const user = localStorage.getItem("user");
@@ -30,6 +31,7 @@ function App() {
               <Route path="/add-product" element={<AddProduct />} />
             </Route>
             <Route path="/" element={<Login />} />
+            <Route path="/signup" element={<SignUp />} />
           </Routes>
         </SideBar>
       </BrowserRouter>

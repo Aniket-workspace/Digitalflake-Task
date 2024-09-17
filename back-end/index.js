@@ -25,7 +25,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: true }));
 app.use(morgan("dev"));
 app.use(cors());
 
-const jwtKey = "digitalflake";
+const jwtKey = process.env.jwtKey;
 
 // signup
 app.post("/signup", async (req, resp) => {
