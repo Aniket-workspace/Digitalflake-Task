@@ -1,4 +1,4 @@
-import express from "express";
+import express, { response } from "express";
 import colors from "colors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
@@ -9,6 +9,7 @@ import Category from "./models/categoryModel.js";
 import Subcategory from "./models/subcategoryModel.js";
 import User from "./models/userModel.js";
 import Jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 // configuration env
 dotenv.config();
@@ -30,6 +31,16 @@ const jwtKey = process.env.jwtKey;
 // signup
 app.post("/signup", async (req, resp) => {
   let user = new User(req.body);
+  let existUser = await User.findOne({ email: user.email });
+  if (existUser) {
+    return resp.status(400).json({
+      success: false,
+      message: `User email already exists. Please use different credentials.`,
+    });
+  }
+  const saltRound = 10;
+  const hash = await bcrypt.hash(user.password, saltRound);
+  user.password = hash;
   let result = await user.save();
   result = result.toObject();
   delete result.password;
@@ -41,23 +52,50 @@ app.post("/signup", async (req, resp) => {
   });
 });
 
-// login
 app.post("/login", async (req, resp) => {
   console.log(req.body);
+
+  // Check if both email and password are provided
   if (req.body.email && req.body.password) {
-    let user = await User.findOne(req.body).select("-password");
-    if (user) {
-      Jwt.sign({ user }, jwtKey, (err, token) => {
-        if (err) {
-          resp.send({ result: "Somthing went wrong, please try again later" });
-        }
-        resp.send({ user, auth: token });
-      });
-    } else {
-      resp.send({ result: "Invalid Credentials" });
+    try {
+      // Find user based on email and retrieve the user without the password field
+      let user = await User.findOne({ email: req.body.email }).select(
+        "+password"
+      );
+
+      if (user) {
+        const pass = req.body.password;
+
+        // Compare the provided password with the hashed password in the database
+        bcrypt.compare(pass, user.password, async (err, isMatch) => {
+          if (err) {
+            return resp
+              .status(500)
+              .send({ result: `Something went wrong: ${err.message}` });
+          }
+
+          if (isMatch) {
+            Jwt.sign({ user }, jwtKey, (err, token) => {
+              if (err) {
+                return resp.status(500).send({
+                  result: "Something went wrong, please try again later",
+                });
+              }
+
+              resp.send({ user, auth: token });
+            });
+          } else {
+            resp.status(401).send({ result: "Invalid Credentials" });
+          }
+        });
+      } else {
+        resp.status(401).send({ result: "Invalid Credentials" });
+      }
+    } catch (err) {
+      resp.status(500).send({ result: `Server error: ${err.message}` });
     }
   } else {
-    resp.send({ result: "Invalid Credentials" });
+    resp.status(400).send({ result: "Invalid Credentials" });
   }
 });
 
